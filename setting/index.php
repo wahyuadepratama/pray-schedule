@@ -265,6 +265,7 @@
        $('#subuh').val("0"+times.items[0].fajr.substring(0,4));
        $('#syuru').val("0"+times.items[0].shurooq.substring(0,4));
        $('#dzuhur').val(times.items[0].dhuhr.substring(0,5));
+       console.log(times.items[0].dhuhr.substring(0,5));
 
        var hour = parseInt(times.items[0].asr.substring(0,1)) + 12;
        var minute = times.items[0].asr.substring(2,4);

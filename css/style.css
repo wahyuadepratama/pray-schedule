@@ -1,5 +1,6 @@
 *{
   font-family: century gothic;
+  src: url('century_gothic.ttf') format('truetype');
   /* overflow: hidden; */
 }
 

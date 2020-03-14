@@ -101,8 +101,17 @@
                       <label>Tanggal Awal Ramadhan Selanjutnya (Opsional)</label>
                       <input type="date" class="form-control" name="ramadhan" value="<?= $data->ramadhan ?>">
                     </div>
-                    <button type="submit" class="btn btn-sm btn-success form-control" name="button" style="margin-bottom: 5px">
-                      <i class="fas fa-download"></i> Save</button>
+                    <div class="form-group">
+                      <button type="submit" class="btn btn-sm btn-success form-control" name="button" style="margin-bottom: 5px">
+                        <i class="fas fa-download"></i> Save</button>
+                    </div>
+                    <small style="margin-top: 20px">Tulis kota, kabupaten atau alamat apapun yang ingin dicari jika pengecekan GPS tidak akurat</small>
+                    <div class="input-group mb-3">
+                      <input type="text" class="form-control" placeholder="Your city, address, etc" aria-describedby="basic-addon2" id="location_address">
+                      <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" onclick="getLocation()">Check Location</button>
+                      </div>
+                    </div>
                     <button type="button" class="btn btn-sm btn-warning form-control" name="button" style="color: white" onclick="synchData()">
                       <i class="fas fa-sync"></i> Update Dari Internet</button>
                   </form>
@@ -247,15 +256,24 @@
   <script src="../bootstrap/js/bootstrap.min.js" charset="utf-8"></script>
   <script src="../bootstrap/js/moment.js" charset="utf-8"></script>
   <script src="../bootstrap/js/sweetalert.js" charset="utf-8"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBNnzxae2AewMUN0Tt_fC3gN38goeLVdVE"></script>
 
   <script type="text/javascript">
+
+  var get_city;
 
   function synchData() {
 
     swal("Update..");
+    get_city = $('#location_address').val();
+    get_city = get_city.trim();
+
     jQuery(function($) {
-     $.getJSON('https://muslimsalat.com/padang/daily.json?key=65ffb94b0e743e247fc3148fb1453e21&jsoncallback=?', function (times)
+     $.getJSON('https://muslimsalat.com/'+encodeURI(get_city)+'/daily.json?key=65ffb94b0e743e247fc3148fb1453e21&jsoncallback=?', function (times)
      {
+       if (times.status_code == 0) {
+         swal("Gagal!", "Jadwal shalat untuk "+get_city+" tidak ditemukan", "error");
+       }
        var raw_date = new Date();
        var month = raw_date.getMonth()+1;
        var today_date = raw_date.getUTCFullYear()+'-'+month+'-'+raw_date.getUTCDate();
@@ -279,10 +297,74 @@
        var minute = times.items[0].isha.substring(2,4);
        $('#isya').val(hour+':'+minute);
 
-       swal("Great!", "Sinkronisasi Data Berhasil!", "success");
+       swal("Great!", "Sinkronisasi data berhasil! Jadwal shalat sekarang sesuai dengan waktu "+get_city, "success");
      })
      .fail(function() { swal("Gagal!", "Koneksi bermasalah!", "error"); })
     });
+  }
+
+  function getLocation(){
+    if (navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(showPosition,showError);
+    }
+    else{
+        alert("Geolocation is not supported by this browser.")
+    }
+  }
+
+  function showPosition(position){
+      lat=position.coords.latitude;
+      lon=position.coords.longitude;
+      displayLocation(lat,lon);
+  }
+
+  function showError(error){
+      switch(error.code){
+          case error.PERMISSION_DENIED:
+              alert("User denied the request for Geolocation.")
+          break;
+          case error.POSITION_UNAVAILABLE:
+              alert("Location information is unavailable.")
+          break;
+          case error.TIMEOUT:
+              alert("The request to get user location timed out.")
+          break;
+          case error.UNKNOWN_ERROR:
+              alert("An unknown error occurred.")
+          break;
+      }
+  }
+
+  function displayLocation(latitude,longitude){
+      var geocoder;
+      geocoder = new google.maps.Geocoder();
+      var latlng = new google.maps.LatLng(latitude, longitude);
+
+      geocoder.geocode(
+          {'latLng': latlng},
+          function(results, status) {
+              if (status == google.maps.GeocoderStatus.OK) {
+                  if (results[0]) {
+                      var add= results[0].formatted_address ;
+                      var  value=add.split(",");
+
+                      count=value.length;
+                      country=value[count-1];
+                      state=value[count-2];
+                      city=value[count-3];
+                      console.log("city name is: " + city);
+                      get_city = city;
+                      $('#location_address').val(city);
+                  }
+                  else  {
+                      console.log("address not found");
+                  }
+              }
+              else {
+                  console.log("Geocoder failed due to: " + status);
+              }
+          }
+      );
   }
 
   </script>
